@@ -6,6 +6,7 @@ const mongoose = require ("mongoose")
 
 const user = require("./Routes/userRoute.js")
 const product = require("./Routes/productRoute.js")
+const order = require("./Routes/orderRoute.js")
 
 
 mongoose.connect("mongodb://localhost:27017/sampleproject")
@@ -17,6 +18,7 @@ const app = express()
 app.use(express.json())
 app.use(user)
 app.use(product)
+app.use(order)
 
 app.listen(PORT,() => 
     {
