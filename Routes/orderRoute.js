@@ -1,6 +1,5 @@
 const express = require("express")
 
-const Order = require("../Models/Orders")
 
 const {order,addOrder,updateOrder,deleteOrder} = require("../controller/orderController")
 
