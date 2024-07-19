@@ -1,39 +1,58 @@
-const User = require ("../Models/Users")
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const User = require('../Models/Users');
 
-const user = async (req,res) => {
-    const user = await User.findOne()
-    
-    if (!user) {
-        res.send("User not found")
+const registerUser = async (req, res) => {
+  const { name, email, password } = req.body;
+
+  if (!name || !email || !password) {
+    return res.status(400).json({ msg: 'All fields are required' });
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ msg: 'Invalid email format' });
+  }
+
+  try {
+    // Check if user already exists
+    let user = await User.findOne({ email });
+    if (user) {
+      return res.status(400).json({ msg: 'User already exists' });
     }
-    res.send(user)
-    
- }
- 
- const createUser = async(req,res) => {
-     const user = new User(req.body)
-     await user.save()
-     res.send(user)
- }
 
- const updateUser = async(req,res) => {
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
 
-    const params = req.params.id;
-    const user = await User.findByIdAndUpdate(3, req.body)
+    // Create a new user instance with hashed password
+    user = new User({ name, email, password: hashedPassword });
 
-    if (!user) {
-        res.send("User not found, Cannot update")
-    }
-    res.send(user)
- }
+    // Save the user to the database
+    await user.save();
 
- const deleteUser = async(req,res) => {
-    const params = req.params.id;
-    const user = await User.findByIdAndDelete(3, req.body)
-    if(!user) {
-        res.send("User not found, Cannot delete")
-    }
-    res.send(user)
- }
- 
- module.exports = {user,createUser,updateUser,deleteUser}
+    // Generate JWT token
+    const payload = {
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email // Assuming your user model has _id field
+      },
+    };
+
+    // Sign the token using JWT_SECRET from environment variables
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: '5m' }, 
+      (err, token) => {
+        if (err) throw err;
+        res.status(201).json({ user, token }); // Send the JWT as a response
+      }
+    );
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+};
+
+module.exports = registerUser;

@@ -1,29 +1,30 @@
 const express = require("express")
-
-const bodyParser = require('body-parser');
-
-const mongoose = require ("mongoose")
-
-const user = require("./Routes/userRoute.js")
-const product = require("./Routes/productRoute.js")
-const order = require("./Routes/orderRoute.js")
+const mongoose = require("mongoose")
+const user = require("./Routes/userRoute")
+require('dotenv').config();
+const connectDB = require ("./config/db")
 
 
-mongoose.connect("mongodb://localhost:27017/sampleproject")
-
-const PORT = 8000
+connectDB();
 
 const app = express()
 
+const PORT = process.env.PORT;
+
+
 app.use(express.json())
-app.use(user)
-app.use(product)
-app.use(order)
 
-app.listen(PORT,() => 
-    {
-        console.log(`Server is running on port:${PORT}`)
-    }
+app.use('/api', user)
 
 
-)
+app.get("/", (req, res) => {
+  res.send("Hello from the Server");
+})
+
+
+  
+
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port: ${PORT}`);
+});
